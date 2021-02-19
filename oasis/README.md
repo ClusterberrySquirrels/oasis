@@ -32,7 +32,7 @@ allows applications to be ported accross a network to different systems.
 	
 	enclosure optional
 
-2. Assembly:
+"2. Assembly:"
 
 To begin this project, we started out with 2 Raspberry Pi's that would serve 
 as a client and a server module.  The idea is to have a master node and at least
