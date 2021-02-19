@@ -1,4 +1,3 @@
-# TCP app
 use std::fs;
 // --snip--
 

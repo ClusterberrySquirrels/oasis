@@ -1,1 +1,1 @@
-C:\Users\Matt\Documents\School\SeniorProject\oasis\target\debug\Oasis.exe: C:\Users\Matt\Documents\School\SeniorProject\oasis\src\main.rs
+C:\Users\Matt\Documents\School\oasis\oasis\target\debug\Oasis.exe: C:\Users\Matt\Documents\School\oasis\oasis\src\main.rs
