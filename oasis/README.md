@@ -1,14 +1,15 @@
 # The Oasis Project
 
-Despite being a being a massively multiplayer online simulation gaming platform,
-the Oasis immursed users into a global network that connected their everyday 
+Despite being a massively multiplayer online simulation gaming platform,
+the Oasis immursed it's users into a global network that connected their everyday 
 lives in a virtual environment. The goal of this project is not to make virtual 
 reality online gaming possible, but to expand on the idea of network hosting 
 a cloud server using cost-effective means.
 
 This project consists of 3 or more Raspberry Pi's connected together using a 
-router while employing container technology to deploy applications.  Containers
-give the developer the ability to package and application with all the working
+router while employing container technology to deploy applications.  
+
+Containers give the developer the ability to package and application with all the working
 libraries and dependencies, and ship it all out as one package.  Building complex
 applications that require multiple components accross a large array of machines
 is difficult.  However, there is one tool that can solve the problem of managing
@@ -24,8 +25,11 @@ allows applications to be ported accross a network to different systems.
 1. Components: 
 
 	x 3 Raspberry Pi version 4
+	
 	x 1 router (stand alone / no gateway)
+	
 	x 3 Solid State micro SD
+	
 	enclosure optional
 
 2. Assembly:
