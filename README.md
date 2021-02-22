@@ -89,9 +89,13 @@ Update the apt package index and install packages to allow apt to use a reposito
 In order to get the following packages to install, a bulk command run as expected
 so we chunked them into different executions in order to extract what we needed.  
 
-First	$sudo apt-get update
+First	
+	
+	$sudo apt-get update
 
-Then	$ sudo apt-get install software-properties-common
+Then	
+	
+	$ sudo apt-get install software-properties-common
 	$ sudo apt-get install apt-transport-https
 	$ sudo apt-get install ca-certificates
 	$ sudo apt-get install curl
