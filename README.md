@@ -69,7 +69,39 @@ You should see a status list similar to this:
 	NAME      STATUS  ROLES   AGE    VERSION
 	masterPi  Ready   master  2m13s  v1...
 
+# Converting a Virtual image to .iso image
+We didn't use this due to the fact that the most optimal utility to use in this case was docker.  However,
+if you want to give it a try, the following 
 
+	sudo apt install systemback 
 
+# Docker Setup
+
+Since were working with a Raspberry Pi, we need to download and install the amd64 version of docker.  
+
+You can follow the instructions from the Docker website to properly install however, since we found
+that working with amd technology there was a one size fits all command that would help us do this.  
+So... were going to walk through the steps below:
+
+1.  SET UP THE REPOSITORY
+Update the apt package index and install packages to allow apt to use a repository over HTTPS:
+
+In order to get the following packages to install, a bulk command run as expected
+so we chunked them into different executions in order to extract what we needed.  
+
+First	$sudo apt-get update
+
+Then	$ sudo apt-get install software-properties-common
+	$ sudo apt-get install apt-transport-https
+	$ sudo apt-get install ca-certificates
+	$ sudo apt-get install curl
+	$ sudo apt-get install gnupg-agent
+	$ sudo apt-get install software-properties-common
+	
+Now wasn't that fun?... Moving on...
+
+# Install Brew
+
+	/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"	
 
 
