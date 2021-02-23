@@ -94,32 +94,13 @@ if you want to give it a try, the following
 
 # Docker Setup
 
-Since were working with a Raspberry Pi, we need to download and install the amd64 version of docker.  
+Since were working with a Raspberry Pi, we need to download and install the arm64 version of docker.  
 
-You can follow the instructions from the Docker website to properly install however, since we found
-that working with amd technology there was a one size fits all command that would help us do this.  
-So... were going to walk through the steps below:
+You can follow the instructions from the Docker website to manually download and install the package, however, Docker provides a convenience script that executes the entire install process:
 
-1.  SET UP THE REPOSITORY
-Update the apt package index and install packages to allow apt to use a repository over HTTPS:
+	curl -fsSL https://get.docker.com -o get-docker.sh
+	sudo sh get-docker.sh
 
-In order to get the following packages to install, a bulk command run as expected
-so we chunked them into different executions in order to extract what we needed.  
-
-First	
-	
-	$sudo apt-get update
-
-Then	
-	
-	$ sudo apt-get install software-properties-common
-	$ sudo apt-get install apt-transport-https
-	$ sudo apt-get install ca-certificates
-	$ sudo apt-get install curl
-	$ sudo apt-get install gnupg-agent
-	$ sudo apt-get install software-properties-common
-	
-Now wasn't that fun?... Moving on...
 
 # Install Brew
 
