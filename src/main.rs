@@ -80,13 +80,13 @@ async fn signup(tera: web::Data<Tera>) -> impl Responder {
     HttpResponse::Ok().body(rendered)
 }
 
-async fn process_signup(data: web::Form<User>) -> impl Responder {
+async fn process_signup(data: web::Form<NewUser>) -> impl Responder {
     use schema::users;
 
     let connection = establish_connection();
 
     diesel::insert_into(users::table)
-        .values(data.into_inner())// FIXME: the trait `diesel::Insertable<users::table>` is not implemented for `User`
+        .values(&*data)
         .get_result::<User>(&connection)
         .expect("Error registering user.");
 
