@@ -1,3 +1,6 @@
+# The Oasis
+
+The Oasis is written in Rust and operates on a multithreaded TCP server
 # The Oasis Project
 
 Despite being a massively multiplayer online simulation gaming platform,
@@ -107,3 +110,13 @@ You can follow the instructions from the Docker website to manually download and
 	/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"	
 
 
+### Running the server
+Invoke in the terminal and then load 127.0.0.1:8080 in a web browser.
+
+    cargo run 
+
+This code will listen at the address 127.0.0.1:8080 for incoming TCP streams.
+
+Keep server running
+
+    cargo watch -x run
