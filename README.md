@@ -105,18 +105,108 @@ You can follow the instructions from the Docker website to manually download and
 	sudo sh get-docker.sh
 
 
-# Install Brew
+# Install Brew for Mac
 
 	/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"	
 
+###Setting up the database
+Before we start the Oasis web application the database needs to be established.  There is no need to 
+create tables and insert the data as Diesel has already written the migrations for us based on the schema
+we want to record user profile creation.  Since the the configurations require PostgreSQL you can either 
+navigate to https://www.postgresql.org/download/ and find the latest or use a earlier version that you like.  
+I am used Ubuntu on WSL and MacOSX to get this project started.  However, the target OS in the end will be 
+Raspian OS for Raspberry Pi so Brew might not be an option.
 
-### Running the server
+Below I have the example of using version 12 for PostgreSQL because it is the most stable however, version
+13(beta), which is the most up to date, seems to work just fine.
+
+Ubuntu:
+
+	sudo apt-get install postgresql-12
+
+MacOSX:
+
+	brew install postgresql
+
+After that you need to install the dev library for postgres.
+
+Ubuntu:
+
+	sudo apt-get install libpq
+
+MacOSX:
+
+	brew install libpq
+
+Finally, because postgres doesn't initialize upon download, we must manually start the
+server each time or you can add it to something like bashrc.  Anyway, start the postgre service
+like so:
+
+Ubuntu:
+
+	sudo service postgresql start
+	sudo service postgresql stop // to end the session
+
+MacOSX:
+
+	brew services start postgresql
+	brew services stop postgresql // to end the session
+
+Now, we need to do one last thing which is establish the username and password so that Diesel
+can access the database and make changes.
+
+	psql postgres // This enters into the postgres database
+
+Then once inside the postgres environment, you can set the password:
+
+	postgres=# \PASSWORD postgres
+	Enter new password:
+
+####Install Diesel CLI crate
+Since this application is going to be running in a Kubernetes container I will more than likely
+have this dependency set up when you start the service.  However, I love redundancy so I am 
+including this step for good measure.  
+
+Diesel will let us work with postgres from the commandline because it is a standalone binary built
+into Rust.  This will allow us to store user input for profile creation and allow us to keep the user
+logged in.  This is an Object Relational Model database.
+
+	cargo install diesel_cli --no-default-features --feature postgresql
+
+We can also use MySQL if you want but you will have to perform the install and change the feature to MySQL
+for this ORM to work.
+
+Once Diesel is installed, make sure you are in the application directory and run the following command to 
+start Diesel's migration service:
+
+	diesel migration run
+
+That's it!
+
+### Running the application server
 Invoke in the terminal and then load 127.0.0.1:8080 in a web browser.
 
     cargo run 
+
 
 This code will listen at the address 127.0.0.1:8080 for incoming TCP streams.
 
 Keep server running
 
     cargo watch -x run
+
+There are 4 pages that the user can navigate to (signup, login, index, submission)
+The first page the user should be navigating to is the signup page
+
+	127.0.0.1:8080/signup
+There, the user can create a profile with their own credentials where they give a username,
+email, and password.
+
+Next the user should navigate to the login page where they can enter the credentials they
+provided upon signup.
+
+	127.0.0.1:8080/login
+The user will stay logged in until they navigate to the logout page where they will be fully
+logged out of the system environment.
+
+	127.0.0.1:8080/logout
