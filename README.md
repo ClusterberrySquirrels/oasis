@@ -109,7 +109,7 @@ You can follow the instructions from the Docker website to manually download and
 
 	/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"	
 
-###Setting up the database
+### Setting up the database
 Before we start the Oasis web application the database needs to be established.  There is no need to 
 create tables and insert the data as Diesel has already written the migrations for us based on the schema
 we want to record user profile creation.  Since the the configurations require PostgreSQL you can either 
@@ -162,7 +162,7 @@ Then once inside the postgres environment, you can set the password:
 	postgres=# \PASSWORD postgres
 	Enter new password:
 
-####Install Diesel CLI crate
+#### Install Diesel CLI crate
 Since this application is going to be running in a Kubernetes container I will more than likely
 have this dependency set up when you start the service.  However, I love redundancy so I am 
 including this step for good measure.  
