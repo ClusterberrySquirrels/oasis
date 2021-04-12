@@ -22,7 +22,6 @@ struct Post {
     author: String,
 }
 
-
 #[derive(Debug, Deserialize)]
 struct Submission {
     title: String,
@@ -123,12 +122,15 @@ async fn process_login(data: web::Form<LoginUser>, id: Identity) -> impl Respond
     }
 }
 
-async fn submission(tera: web::Data<Tera>) -> impl Responder {
+async fn submission(tera: web::Data<Tera>, id: Identity) -> impl Responder {
     let mut data = Context::new();
     data.insert("title", "Submit a Post");
 
-    let rendered = tera.render("submission.html", &data).unwrap();
-    HttpResponse::Ok().body(rendered)
+    if let Some(id) = id.identity() {
+        let rendered = tera.render("submission.html", &data).unwrap();
+        HttpResponse::Ok().body(rendered);
+    }
+    HttpResponse::Unauthorized().body("User not logged in.")
 }
 
 async fn process_submission(data: web::Form<Submission>) -> impl Responder {
