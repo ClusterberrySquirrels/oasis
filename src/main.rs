@@ -22,18 +22,6 @@ struct Post {
     author: String,
 }
 
-// #[derive(Deserialize, Debug)]
-// struct User {
-//     username: String,
-//     email: String,
-//     password: String,
-// }
-
-// #[derive(Deserialize, Debug)]
-// struct LoginUser {
-//     username: String,
-//     password: String,
-// }
 
 #[derive(Debug, Deserialize)]
 struct Submission {
