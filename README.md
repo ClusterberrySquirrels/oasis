@@ -163,7 +163,7 @@ Then once inside the postgres environment, you can set the password:
 	postgres=# \PASSWORD postgres
 	Enter new password:
 
-####Install Diesel CLI crate
+#### Install Diesel CLI crate
 Since this application is going to be running in a Kubernetes container I will more than likely
 have this dependency set up when you start the service.  However, I love redundancy so I am 
 including this step for good measure.  
