@@ -1,6 +1,3 @@
-# The Oasis
-
-The Oasis is written in Rust and operates on a multithreaded TCP server
 # The Oasis Project
 
 Despite being a massively multiplayer online simulation gaming platform,
