@@ -12,14 +12,12 @@ use serde::{Serialize, Deserialize};
 use diesel::prelude::*;
 use diesel::pg::PgConnection;
 use dotenv::dotenv;
-// use models::{User, NewUser};
 use models::{User, NewUser, LoginUser};
 
-#[derive(Serialize)]
-struct Post {
+#[derive(Deserialize)]
+struct PostForm {
     title: String,
     link: String,
-    author: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -130,7 +128,7 @@ async fn submission(tera: web::Data<Tera>, id: Identity) -> impl Responder {
         let rendered = tera.render("submission.html", &data).unwrap();
         HttpResponse::Ok().body(rendered);
     }
-    HttpResponse::Unauthorized().body("User not logged in.")
+    HttpResponse::Unauthorized().body("401 - Unauthorized response: \n User not logged in.")
 }
 
 async fn process_submission(data: web::Form<Submission>) -> impl Responder {
