@@ -5,6 +5,7 @@ extern crate diesel;
 pub mod schema;
 pub mod models;
 
+
 use actix_web::{HttpServer, App, web, HttpResponse, Responder};
 use actix_identity::{Identity, CookieIdentityPolicy, IdentityService};
 use tera::{Tera, Context};
@@ -14,10 +15,11 @@ use diesel::pg::PgConnection;
 use dotenv::dotenv;
 use models::{User, NewUser, LoginUser};
 
-#[derive(Deserialize)]
-struct PostForm {
+#[derive(Serialize)]
+struct Post {
     title: String,
     link: String,
+    author: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -160,4 +162,12 @@ async fn main() -> std::io::Result<()> {
         .bind("127.0.0.1:8080")?
         .run()
         .await
+}
+
+#[cfg(test)]
+mod tests {
+
+    fn test_process_signup() {
+
+    }
 }
