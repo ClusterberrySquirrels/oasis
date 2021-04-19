@@ -109,7 +109,7 @@ async fn login(tera: web::Data<Tera>, id: Identity) -> impl Responder {
 // This process removes the identity and logs the user out of the session
 async fn logout(id: Identity) -> impl Responder {
     id.forget(); // remove identity
-    HttpResponse::Ok().body("Logged out.").finish()
+    HttpResponse::Ok().body("Logged out.")
 }
 
 // This process checks the users credentials and verifies if user is authentic or not.
