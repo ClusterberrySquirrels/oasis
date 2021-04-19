@@ -5,8 +5,7 @@ extern crate diesel;
 pub mod schema;
 pub mod models;
 
-
-use actix_web::{HttpServer, App, web, HttpResponse, Responder};
+use actix_web::{get, post, HttpServer, App, web, HttpResponse, Responder, HttpRequest};
 use actix_identity::{Identity, CookieIdentityPolicy, IdentityService};
 use tera::{Tera, Context};
 use serde::{Serialize, Deserialize};
@@ -28,6 +27,7 @@ struct Submission {
     link: String,
 }
 
+// Function to establish connection to database
 fn establish_connection() -> PgConnection {
     dotenv().ok();
 
@@ -38,6 +38,7 @@ fn establish_connection() -> PgConnection {
         .expect(&format!("Error connecting to {}", database_url))
 }
 
+// Main navigation page to other links in the Oasis
 async fn index(tera: web::Data<Tera>) -> impl Responder {
     let mut data = Context::new();
 
@@ -52,6 +53,11 @@ async fn index(tera: web::Data<Tera>) -> impl Responder {
             link: String::from("https://example.com"),
             author: String::from("Other cool app"),
         },
+        Post {
+            title: String::from("Logout"),
+            link: String::from("/logout"),
+            author: String::from("Logout from here"),
+        }
     ];
 
     data.insert("title", "index");
@@ -61,6 +67,8 @@ async fn index(tera: web::Data<Tera>) -> impl Responder {
     HttpResponse::Ok().body(rendered)
 }
 
+// Users navigate to login page to create profile where they provide
+// username, password and email to gain access to login.
 async fn signup(tera: web::Data<Tera>) -> impl Responder {
     let mut data = Context::new();
     data.insert("title", "Sign Up");
@@ -69,36 +77,44 @@ async fn signup(tera: web::Data<Tera>) -> impl Responder {
     HttpResponse::Ok().body(rendered)
 }
 
+// This process inserts user information into SQL database using the insert
 async fn process_signup(data: web::Form<NewUser>) -> impl Responder {
     use schema::users;
 
+    // Connect to database singleton object
     let connection = establish_connection();
 
+    // Insert provided user information into user database
     diesel::insert_into(users::table)
         .values(&*data)
         .get_result::<User>(&connection)
-        .expect("Error registering user.");
+        .expect("Error registering user."); // Error message if user doesn't enter all info
 
     println!("{:?}", data);
     HttpResponse::Ok().body(format!("Successfully saved user: {}", data.username))
 }
 
+// Users provide credentials provided from login page to login.
 async fn login(tera: web::Data<Tera>, id: Identity) -> impl Responder {
     let mut data = Context::new();
     data.insert("title", "Login");
 
     if let Some(id) = id.identity() {
-        return HttpResponse::Ok().body("Already logged in.")
+        return HttpResponse::Ok().body("Already logged in.");
     }
     let rendered = tera.render("login.html", &data).unwrap();
     HttpResponse::Ok().body(rendered)
 }
 
+// This process removes the identity and logs the user out of the session
 async fn logout(id: Identity) -> impl Responder {
-    id.forget();
-    HttpResponse::Ok().body("Logged out.")
+    id.forget(); // remove identity
+    HttpResponse::Ok().body("Logged out.").finish()
 }
 
+// This process checks the users credentials and verifies if user is authentic or not.
+// If they are not then an HTTP response message is returned with "user does not exist".
+// If an invalid password is given then an HTTP response is returned with "Password incorrect".
 async fn process_login(data: web::Form<LoginUser>, id: Identity) -> impl Responder {
     use schema::users::dsl::{username, users};
 
@@ -114,7 +130,7 @@ async fn process_login(data: web::Form<LoginUser>, id: Identity) -> impl Respond
             } else {
                 HttpResponse::Ok().body("Password is incorrect.")
             }
-        },
+        }
         Err(e) => {
             println!("{:?}", e);
             HttpResponse::Ok().body("User doesn't exist.")
@@ -122,6 +138,7 @@ async fn process_login(data: web::Form<LoginUser>, id: Identity) -> impl Respond
     }
 }
 
+// This function is provided for users to post messages to the site page.
 async fn submission(tera: web::Data<Tera>, id: Identity) -> impl Responder {
     let mut data = Context::new();
     data.insert("title", "Submit a Post");
@@ -133,6 +150,7 @@ async fn submission(tera: web::Data<Tera>, id: Identity) -> impl Responder {
     HttpResponse::Unauthorized().body("401 - Unauthorized response: \n User not logged in.")
 }
 
+// Function procces for posting a submission.
 async fn process_submission(data: web::Form<Submission>) -> impl Responder {
     println!("{:?}", data);
     HttpResponse::Ok().body(format!("Posted submission: {}", data.title))
@@ -164,10 +182,16 @@ async fn main() -> std::io::Result<()> {
         .await
 }
 
+// tests
 #[cfg(test)]
 mod tests {
+   use super::*;
+    // use std::intrinsics::forget;
 
-    fn test_process_signup() {
-
+    #[test]
+        fn login_test() {
+        // let result = logout(self::);
+        // assert!(result.forget(actix_identity::Identity));
     }
+
 }
