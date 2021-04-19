@@ -186,12 +186,29 @@ async fn main() -> std::io::Result<()> {
 #[cfg(test)]
 mod tests {
    use super::*;
-    // use std::intrinsics::forget;
+    use actix_web::web::Data;
+    use actix_web::Responder;
+    use actix_web::{test,http};
 
     #[test]
-        fn login_test() {
-        // let result = logout(self::);
-        // assert!(result.forget(actix_identity::Identity));
+    fn test_index() {
+        let result = Data::new(Default::default());
+        index(result);
+
+        // assert!(render);
     }
+
+    #[actix_rt::test]
+    async fn test_index_ok() {
+        let result = Data::new(Default::default());
+        let req = test::TestRequest::with_header("content-type", "text/plain").to_http_request();
+        let resp = index(result).await;
+        assert_eq!(resp.status(), http::StatusCode::OK);
+    }
+    // #[test]
+    //     fn another() {
+    //
+    //     panic!("Make this test fail!")
+    // }
 
 }
