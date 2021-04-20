@@ -188,7 +188,8 @@ mod tests {
    use super::*;
     use actix_web::web::Data;
     use actix_web::Responder;
-    use actix_web::{test,http};
+    // use actix_web::{test,http};
+    use actix_web::{test, web, App};
 
     #[test]
     fn test_index() {
@@ -199,12 +200,16 @@ mod tests {
     }
 
     #[actix_rt::test]
-    async fn test_index_ok() {
-        let result = Data::new(Default::default());
-        let req = test::TestRequest::with_header("content-type", "text/plain").to_http_request();
-        let resp = index(result).await;
-        assert_eq!(resp.status(), http::StatusCode::OK);
+    async fn test_index_get() {
+        let tera = Tera::new("templates/**/*").unwrap();
+        let mut app = test::init_service(
+            App::new().data(tera).route("/", web::get().to(index))).await;
+        let req = test::TestRequest::with_header("content-type", "text/plain").to_request();
+        let resp = test::call_service(&mut app, req).await;
+        print!("{}", resp.status());
+        assert!(resp.status().is_success());
     }
+
     // #[test]
     //     fn another() {
     //
