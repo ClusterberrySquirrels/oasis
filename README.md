@@ -1,6 +1,3 @@
-# The Oasis
-
-The Oasis is written in Rust and operates on a multithreaded TCP server
 # The Oasis Project
 
 Despite being a massively multiplayer online simulation gaming platform,
@@ -114,7 +111,8 @@ Before we start the Oasis web application the database needs to be established. 
 create tables and insert the data as Diesel has already written the migrations for us based on the schema
 we want to record user profile creation.  Since the the configurations require PostgreSQL you can either 
 navigate to https://www.postgresql.org/download/ and find the latest or use a earlier version that you like.  
-I am used Ubuntu on WSL and MacOSX to get this project started.  However, the target OS in the end will be 
+This database utilizes Object Relational Mapping where Diesel handles all of the interactions of our records.
+I used Ubuntu on WSL and switched MacOSX to get this project started.  However, the target OS in the end will be 
 Raspian OS for Raspberry Pi so Brew might not be an option.
 
 Below I have the example of using version 12 for PostgreSQL because it is the most stable however, version
@@ -169,7 +167,7 @@ including this step for good measure.
 
 Diesel will let us work with postgres from the commandline because it is a standalone binary built
 into Rust.  This will allow us to store user input for profile creation and allow us to keep the user
-logged in.  This is an Object Relational Model database.
+logged in.  This is an Object Relational Mapped database.
 
 	cargo install diesel_cli --no-default-features --feature postgresql
 
