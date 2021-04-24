@@ -1,4 +1,9 @@
--- Your SQL goes here
+-- Here we ceate our 3 tables and set up the fields we need and their types
+-- The other thing to pay attention to is that we use the idea of a foreign
+-- key in our post and comments. This way we can in the future implement things
+-- like a "my comments" page or a "my posts" page easily.
+-- The comments table also has a foreign key to itself, this is because
+-- comments can be both comments to the post and replies to other comments.
 CREATE TABLE users
 (
     id       SERIAL PRIMARY KEY,
