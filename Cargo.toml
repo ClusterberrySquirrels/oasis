@@ -20,5 +20,6 @@ diesel = { version = "1.4.0", features = ["postgres", "chrono"] }
 dotenv = "0.15.0"
 mysqlclient-sys = { version = ">=0.1.0, <0.3.0", optional = true }
 chrono = { version = "0.4", features = ["serde"] }
+argonautica = "0.2.0"
 
 

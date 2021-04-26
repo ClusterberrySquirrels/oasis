@@ -20,6 +20,7 @@ use diesel::pg::PgConnection;
 use dotenv::dotenv;
 use models::{User, NewUser, LoginUser, Post, NewPost, Comment, NewComment};
 use actix_web::error::PayloadError::Http2Payload;
+use argonautica::Verifier;
 
 #[derive(Deserialize)]
 struct CommentForm {
@@ -179,12 +180,14 @@ async fn process_signup(data: web::Form<NewUser>) -> impl Responder {
     // Create a database connection to do insertions on the database.
     let connection = establish_connection();
 
+    let new_user = NewUser::new(data.username.clone(), data.email.clone(), data.password.clone());
+
     // We do a validation on our new user such as making sure the username is
     // unique, the email is valid and the password is strong enough.
     // Duplicate users will cause our UNIQUE constraint we wrote in the sql
     // files to be violated and this will cause rust to panic.
     diesel::insert_into(users::table)
-        .values(&*data)
+        .values(&new_user)
         // This is where we execute our insert passing in the connection and
         // casting it to the type of User. The get_result call returns our
         // newly loaded item and we need to cast it properly.
@@ -240,30 +243,26 @@ async fn process_login(data: web::Form<LoginUser>, id: Identity) -> impl Respond
     let user = users.filter(username.eq(&data.username)).first::<User>(&connection);
     // Now we will get a result type that we can match against.
     match user {
-        // If the result was OK then we can go into the next set of logic
         Ok(u) => {
-            // If the result was OK, then we can check the password, and if they
-            // match we will print our original login message to our terminal.
-            if u.password == data.password {
-                // If the password check passes, we will create our session
-                // token and add it to our session table. This also sets the
-                // user's cookie with that information.
+            dotenv().ok();
+            let secret = std::env::var("SECRET_KEY")
+                .expect("SECRET_KEY must be set");
+
+            let valid = Verifier::default()
+                .with_hash(u.password)
+                .with_password(data.password.clone())
+                .with_secret_key(secret)
+                .verify()
+                .unwrap();
+
+            if valid {
                 let session_token = String::from(u.username);
-                // What actix_identity's id option is doing is it's taking our
-                // value and it creates a hash out of it that it keeps in it's
-                // own table.
-                // Wrapping the IdentityService around our app, this means thate
-                // when a request comes in, it grabs the "auth-cookie" set in the
-                // main and does a look up to see what the corresponding id should
-                // be. This value is set in the .remember().
                 id.remember(session_token);
                 HttpResponse::Ok().body(format!("Logged in: {}", data.username))
-                // If the passwords don't match, we'll let the user know.
             } else {
                 HttpResponse::Ok().body("Password is incorrect.")
             }
-        }
-        // If the result is an Err, we will print a very helpful message.
+        },
         Err(e) => {
             println!("{:?}", e);
             HttpResponse::Ok().body("User doesn't exist.")

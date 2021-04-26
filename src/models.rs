@@ -3,6 +3,8 @@
 use super::schema::{users, posts,comments};
 use diesel::{Queryable, Insertable};
 use serde::{Serialize,Deserialize};
+use crate::dotenv;
+use argonautica::Hasher;
 // We are exposing our structs to other parts of our application through the pub
 // keyword.  We can also keep things private if we need to.
 
@@ -74,6 +76,27 @@ pub struct NewUser {
     pub username: String,
     pub email: String,
     pub password: String,
+}
+
+impl NewUser {
+    pub fn new(username: String, email: String, password: String) -> Self {
+        dotenv().ok();
+
+        let secret = std::env::var("SECRET_KEY")
+            .expect("SECRET_KEY must be set");
+
+        let hash = Hasher::default()
+            .with_password(password)
+            .with_secret_key(secret)
+            .hash()
+            .unwrap();
+
+        NewUser {
+            username: username,
+            email: email,
+            password: hash,
+        }
+    }
 }
 
 // This also derives Debug so we can print the data out.
