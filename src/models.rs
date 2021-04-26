@@ -1,10 +1,44 @@
 // We use the schema.rs file via the super option because the models.rs file is
 // under the root, main.rs file.
-use super::schema::{users, posts};
+use super::schema::{users, posts,comments};
 use diesel::{Queryable, Insertable};
 use serde::{Serialize,Deserialize};
 // We are exposing our structs to other parts of our application through the pub
 // keyword.  We can also keep things private if we need to.
+
+#[derive(Debug, Serialize, Queryable, Identifiable, Associations)]
+#[belongs_to(Post)]
+pub struct Comment {
+    pub id: i32,
+    pub comment: String,
+    pub post_id: i32,
+    pub user_id: i32,
+    pub parent_comment_id: Option<i32>,
+    pub created_at: chrono::NaiveDateTime,
+}
+
+#[derive(Serialize, Insertable)]
+#[table_name="comments"]
+pub struct NewComment {
+    pub comment: String,
+    pub post_id: i32,
+    pub user_id: i32,
+    pub parent_comment_id: Option<i32>,
+    pub created_at: chrono::NaiveDateTime,
+}
+
+impl NewComment {
+    pub fn new(comment: String, post_id: i32,
+               user_id: i32, parent_comment_id: Option<i32>) -> Self{
+        NewComment {
+            comment: comment,
+            post_id: post_id,
+            user_id: user_id,
+            parent_comment_id: parent_comment_id,
+            created_at: chrono::Local::now().naive_utc(),
+        }
+    }
+}
 
 // To extract the data we need to be able to take the string
 // data in the post request and convert that into a rust object.  For this we
@@ -57,7 +91,7 @@ pub(crate) struct LoginUser {
 // chrono crate. These types aren't included in serde so if we didn't
 // enable serde in our chrono crate we would have issues with the
 // Serialization and Deserialization traits.
-#[derive(Serialize, Debug, Queryable)]
+#[derive(Serialize, Debug, Queryable, Identifiable)]
 pub struct Post {
     pub id: i32,
     pub title: String,

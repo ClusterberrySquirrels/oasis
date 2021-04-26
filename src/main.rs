@@ -18,8 +18,13 @@ use serde::{Serialize, Deserialize};
 use diesel::prelude::*;
 use diesel::pg::PgConnection;
 use dotenv::dotenv;
-use models::{User, NewUser, LoginUser, Post, NewPost};
+use models::{User, NewUser, LoginUser, Post, NewPost, Comment, NewComment};
 use actix_web::error::PayloadError::Http2Payload;
+
+#[derive(Deserialize)]
+struct CommentForm {
+    comment: String,
+}
 
 // This struct is the object that we want to serialize so that we can have Tera
 // render the object without us moving all the data in the struct to the tera
@@ -38,6 +43,50 @@ struct Submission {
     link: String,
 }
 
+async fn comment(
+    data: web::Form<CommentForm>,
+    id: Identity,
+    web::Path(post_id): web::Path<i32>
+) -> impl Responder {
+
+    if let Some(id) = id.identity() {
+        use schema::posts::dsl::{posts};
+        use schema::users::dsl::{users, username};
+
+        let connection = establish_connection();
+
+        let post :Post = posts.find(post_id)
+            .get_result(&connection)
+            .expect("Failed to find post.");
+
+        let user :Result<User, diesel::result::Error> = users
+            .filter(username.eq(id))
+            .first(&connection);
+
+        match user {
+            Ok(u) => {
+                let parent_id = None;
+                let new_comment = NewComment::new(data.comment.clone(), post.id, u.id, parent_id);
+
+                use schema::comments;
+                diesel::insert_into(comments::table)
+                    .values(&new_comment)
+                    .get_result::<Comment>(&connection)
+                    .expect("Error saving comment.");
+
+
+                return HttpResponse::Ok().body("Commented.");
+            }
+            Err(e) => {
+                println!("{:?}", e);
+                return HttpResponse::Ok().body("User not found.");
+            }
+        }
+    }
+
+    HttpResponse::Unauthorized().body("Not logged in.")
+}
+
 // Function to establish connection to database
 // This is the connector that called anytime we want to connect to our databse
 // and do something with it. We include some pars of diesel and we also include
@@ -54,6 +103,7 @@ fn establish_connection() -> PgConnection {
     PgConnection::establish(&database_url)
         .expect(&format!("Error connecting to {}", database_url))
 }
+
 // ** Function Index **
 // We use the unwrap function because if tera fails for whatever reason, our
 // entire application would be moot so panicking would be the best bet.
@@ -83,12 +133,12 @@ async fn index(tera: web::Data<Tera>) -> impl Responder {
     use schema::users::dsl::{users};
 
     let connection = establish_connection();
-    let all_posts :Vec<(Post, User)> = posts.inner_join(users)
+    let all_posts: Vec<(Post, User)> = posts.inner_join(users)
         .load(&connection)
         .expect("Error retrieving all posts.");
 
     let mut data = Context::new();
-    data.insert("title", "Hacker Clone");
+    data.insert("title", "The Oasis");
     data.insert("posts_users", &all_posts);
 
     let rendered = tera.render("index.html", &data).unwrap();
@@ -208,7 +258,7 @@ async fn process_login(data: web::Form<LoginUser>, id: Identity) -> impl Respond
                 // be. This value is set in the .remember().
                 id.remember(session_token);
                 HttpResponse::Ok().body(format!("Logged in: {}", data.username))
-            // If the passwords don't match, we'll let the user know.
+                // If the passwords don't match, we'll let the user know.
             } else {
                 HttpResponse::Ok().body("Password is incorrect.")
             }
@@ -233,6 +283,50 @@ async fn logout(id: Identity) -> impl Responder {
     HttpResponse::Ok().body("Logged out.")
 }
 
+// The first thing we need to do is register our route, but we can't use our
+// trusty route option anymore as we're trying to also pass in data via the
+// url. Now we can register a service which allows us to do more configuration
+// on the route. This way we can have wildcards and dynamic variables in our
+// paths and still process them.
+async fn post_page(tera: web::Data<Tera>,
+                   id: Identity,
+                   web::Path(post_id): web::Path<i32>) -> impl Responder {
+    use schema::posts::dsl::{posts};
+    use schema::users::dsl::{users};
+
+    let connection = establish_connection();
+
+    // Were going to load the Post and User and display comments
+    let post: Post = posts.find(post_id)
+        .get_result(&connection)
+        .expect("Failed to find post.");
+
+    let user: User = users.find(post.author)
+        .get_result(&connection)
+        .expect("Failed to find user.");
+
+    let comments :Vec<(Comment, User)> = Comment::belonging_to(&post)
+        .inner_join(users)
+        .load(&connection)
+        .expect("Failed to find comments.");
+
+    // We bring up the tables we need, then we set up a connection to our DB.
+    let mut data = Context::new();
+    data.insert("title", &format!("{} - The Oasis", post.title));
+    data.insert("post", &post);
+    data.insert("user", &user);
+    data.insert("comments", &comments);
+
+    if let Some(_id) = id.identity() {
+        data.insert("logged_in", "true");
+    } else {
+        data.insert("logged_in", "false");
+    }
+
+    let rendered = tera.render("post.html", &data).unwrap();
+    HttpResponse::Ok().body(rendered)
+}
+
 
 // This function is provided for users to post messages to the site page.
 async fn submission(tera: web::Data<Tera>, id: Identity) -> impl Responder {
@@ -253,18 +347,18 @@ async fn submission(tera: web::Data<Tera>, id: Identity) -> impl Responder {
 // parameters. This will do the checking to make sure that the submission is
 // coming from a logged in user.
 async fn process_submission(data: web::Form<PostForm>, id: Identity) -> impl Responder {
-    if let Some(id) = id.identity(){
+    if let Some(id) = id.identity() {
         use schema::users::dsl::{username, users};
 
         let connection = establish_connection();
         // Once the session has been confirmed that is valid we bring in the
         // domain specific language for the users table. This will allow us
         // to figure out who the user is.
-        let user :Result<User, diesel::result::Error> = users.filter(username.eq(id)).first(&connection);
-            // In this case, the username is the token in the username so we can
-            // reverse it to a user id easily by querying the user table. If our
-            // token been a random string that we kept matched to the user, we
-            // would need to first go to that table to get the user id.
+        let user: Result<User, diesel::result::Error> = users.filter(username.eq(id)).first(&connection);
+        // In this case, the username is the token in the username so we can
+        // reverse it to a user id easily by querying the user table. If our
+        // token been a random string that we kept matched to the user, we
+        // would need to first go to that table to get the user id.
 
 
         match user {
@@ -342,6 +436,11 @@ async fn main() -> std::io::Result<()> {
             .route("/logout", web::to(logout))
             .route("/submission", web::get().to(submission))
             .route("/submission", web::post().to(process_submission))
+            .service(
+                web::resource("/post/{post_id}")
+                    .route(web::get().to(post_page))
+                    .route(web::post().to(comment))
+            )
     })
         .bind("127.0.0.1:8080")?
         .run()
@@ -351,7 +450,7 @@ async fn main() -> std::io::Result<()> {
 // tests
 #[cfg(test)]
 mod tests {
-   use super::*;
+    use super::*;
     use actix_web::web::Data;
     use actix_web::Responder;
     use actix_web::{test, web, App};
@@ -435,5 +534,4 @@ mod tests {
     //
     //     panic!("Make this test fail!")
     // }
-
 }
