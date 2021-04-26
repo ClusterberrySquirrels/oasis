@@ -1,9 +1,9 @@
 // We use the schema.rs file via the super option because the models.rs file is
 // under the root, main.rs file.
-use super::schema::users;
+use super::schema::{users, posts};
 use diesel::{Queryable, Insertable};
 use serde::Deserialize;
-
+// use super::schema::{users, posts};
 // We are exposing our structs to other parts of our application through the pub
 // keyword.  We can also keep things private if we need to.
 
@@ -48,4 +48,49 @@ pub struct NewUser {
 pub(crate) struct LoginUser {
     pub username: String,
     pub password: String,
+}
+
+// The only strange field is the link as a post could just be a title. We
+// signified this in our SQL file by not giving the "NOT NULL" condition.
+// In our schema file it appears a Nullable and in our struct it should be
+// Option.
+// The other thing to note is that our create_at is a type from the
+// chrono crate. These types aren't included in serde so if we didn't
+// enable serde in our chrono crate we would have issues with the
+// Serialization and Deserialization traits.
+#[derive(Debug, Queryable)]
+pub struct Post {
+    pub id: i32,
+    pub title: String,
+    pub link: Option<String>,
+    pub author: i32,
+    pub created_at: chrono::NaiveDateTime,
+}
+
+// NewPost struct contains all the fields we want to set when we go to insert
+// into our posts table. The two extra fields here are author and created_at
+// both of which we will not extra from the form. This is why we need a third.
+// struct. What we will do is convert our existing PostForm to a NewPost and
+// then insert that into our table.  To do this we will implement in the
+// method NewPost.
+#[derive(Deserialize, Insertable)]
+#[table_name="posts"]
+pub struct NewPost {
+    pub title: String,
+    pub link: String,
+    pub author: i32,
+    pub created_at: chrono::NaiveDateTime,
+}
+
+// This creates a function that will build a NewPost object from a title, link
+// and user id we pass in.
+impl NewPost{
+    pub fn from_post_form(title: String, link: String, uid: i32) -> Self {
+        NewPost {
+            title: title,
+            link: link,
+            author: uid,
+            created_at: chrono::Local::now().naive_utc(),
+        }
+    }
 }
