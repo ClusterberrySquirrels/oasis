@@ -2,8 +2,7 @@
 // under the root, main.rs file.
 use super::schema::{users, posts};
 use diesel::{Queryable, Insertable};
-use serde::Deserialize;
-// use super::schema::{users, posts};
+use serde::{Serialize,Deserialize};
 // We are exposing our structs to other parts of our application through the pub
 // keyword.  We can also keep things private if we need to.
 
@@ -17,7 +16,7 @@ use serde::Deserialize;
 // the User table and get everything structure using the User struct.
 // Note: Because the struct has the Queryable trait, we need to make sure the
 // order and types match what is in the schema.
-#[derive(Queryable, Debug)]
+#[derive(Serialize, Queryable, Debug)]
 pub struct User {
     pub id: i32,
     pub username: String,
@@ -58,7 +57,7 @@ pub(crate) struct LoginUser {
 // chrono crate. These types aren't included in serde so if we didn't
 // enable serde in our chrono crate we would have issues with the
 // Serialization and Deserialization traits.
-#[derive(Debug, Queryable)]
+#[derive(Serialize, Debug, Queryable)]
 pub struct Post {
     pub id: i32,
     pub title: String,

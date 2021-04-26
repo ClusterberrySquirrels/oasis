@@ -25,7 +25,7 @@ use actix_web::error::PayloadError::Http2Payload;
 // render the object without us moving all the data in the struct to the tera
 // Context manually.  We add the derive statement to our struct and it will
 // then be given automatic serialization.
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 struct PostForm {
     title: String,
     link: String,
@@ -79,12 +79,17 @@ fn establish_connection() -> PgConnection {
 // The 'index.html' file extends the 'base.html' and creates our block "content".
 // This way our templates will only hold what they need.
 async fn index(tera: web::Data<Tera>) -> impl Responder {
+    use schema::posts::dsl::{posts};
+    use schema::users::dsl::{users};
+
+    let connection = establish_connection();
+    let all_posts :Vec<(Post, User)> = posts.inner_join(users)
+        .load(&connection)
+        .expect("Error retrieving all posts.");
+
     let mut data = Context::new();
-
-    let posts = "";
-
-    data.insert("title", "The Oasis");
-    data.insert("posts", &posts);
+    data.insert("title", "Hacker Clone");
+    data.insert("posts_users", &all_posts);
 
     let rendered = tera.render("index.html", &data).unwrap();
     HttpResponse::Ok().body(rendered)
@@ -255,12 +260,12 @@ async fn process_submission(data: web::Form<PostForm>, id: Identity) -> impl Res
         // Once the session has been confirmed that is valid we bring in the
         // domain specific language for the users table. This will allow us
         // to figure out who the user is.
-        let user :Result<User, diesel::result::Error> = users.filter(
+        let user :Result<User, diesel::result::Error> = users.filter(username.eq(id)).first(&connection);
             // In this case, the username is the token in the username so we can
             // reverse it to a user id easily by querying the user table. If our
             // token been a random string that we kept matched to the user, we
             // would need to first go to that table to get the user id.
-            username.eq(id)).first(&connection);
+
 
         match user {
             Ok(u) => {
