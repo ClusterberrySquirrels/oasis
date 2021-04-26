@@ -18,17 +18,18 @@ use serde::{Serialize, Deserialize};
 use diesel::prelude::*;
 use diesel::pg::PgConnection;
 use dotenv::dotenv;
-use models::{User, NewUser, LoginUser};
+use models::{User, NewUser, LoginUser, Post, NewPost};
+use actix_web::error::PayloadError::Http2Payload;
 
 // This struct is the object that we want to serialize so that we can have Tera
 // render the object without us moving all the data in the struct to the tera
 // Context manually.  We add the derive statement to our struct and it will
 // then be given automatic serialization.
-#[derive(Serialize)]
-struct Post {
+#[derive(Serialize, Deserialize)]
+struct PostForm {
     title: String,
     link: String,
-    author: String,
+    // author: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -78,28 +79,17 @@ fn establish_connection() -> PgConnection {
 // The 'index.html' file extends the 'base.html' and creates our block "content".
 // This way our templates will only hold what they need.
 async fn index(tera: web::Data<Tera>) -> impl Responder {
+    use schema::posts::dsl::{posts};
+    use schema::users::dsl::{users};
+
+    let connection = establish_connection();
+    let all_posts :Vec<(Post, User)> = posts.inner_join(users)
+        .load(&connection)
+        .expect("Error retrieving all posts.");
+
     let mut data = Context::new();
-
-    let posts = [
-        Post {
-            title: String::from("This is the first link"),
-            link: String::from("https://example.com"),
-            author: String::from("Nutrition-Tracker"),
-        },
-        Post {
-            title: String::from("This is the second Link"),
-            link: String::from("https://example.com"),
-            author: String::from("Other cool app"),
-        },
-        Post {
-            title: String::from("Logout"),
-            link: String::from("/logout"),
-            author: String::from("Logout from here"),
-        }
-    ];
-
-    data.insert("title", "index");
-    data.insert("posts", &posts);
+    data.insert("title", "Hacker Clone");
+    data.insert("posts_users", &all_posts);
 
     let rendered = tera.render("index.html", &data).unwrap();
     HttpResponse::Ok().body(rendered)
@@ -249,17 +239,62 @@ async fn submission(tera: web::Data<Tera>, id: Identity) -> impl Responder {
     let mut data = Context::new();
     data.insert("title", "Submit a Post");
 
+    // We will check the id and if the user is logged in, we will let them
+    // access the submission page.
     if let Some(id) = id.identity() {
         let rendered = tera.render("submission.html", &data).unwrap();
-        HttpResponse::Ok().body(rendered);
+        return HttpResponse::Ok().body(rendered);
     }
+    // If the user isn't logged in, return an unauthorized response.
     HttpResponse::Unauthorized().body("401 - Unauthorized response: \n User not logged in.")
 }
 
-// Function process for posting a submission.
-async fn process_submission(data: web::Form<Submission>) -> impl Responder {
-    println!("{:?}", data);
-    HttpResponse::Ok().body(format!("Posted submission: {}", data.title))
+// Here the form is updated where PostForm extractor and id are passed in as
+// parameters. This will do the checking to make sure that the submission is
+// coming from a logged in user.
+async fn process_submission(data: web::Form<PostForm>, id: Identity) -> impl Responder {
+    if let Some(id) = id.identity(){
+        use schema::users::dsl::{username, users};
+
+        let connection = establish_connection();
+        // Once the session has been confirmed that is valid we bring in the
+        // domain specific language for the users table. This will allow us
+        // to figure out who the user is.
+        let user :Result<User, diesel::result::Error> = users.filter(username.eq(id)).first(&connection);
+            // In this case, the username is the token in the username so we can
+            // reverse it to a user id easily by querying the user table. If our
+            // token been a random string that we kept matched to the user, we
+            // would need to first go to that table to get the user id.
+
+
+        match user {
+            Ok(u) => {
+                // Once we have the User we make sure we have a valid result
+                // and then we convert our PostForm to a NewPost. this line
+                // admittedly does bother me as we are doing a clone to pass
+                // the data. I did not figure out what the borrowing rules
+                // here should be.
+                let new_post = NewPost::from_post_form(data.title.clone(), data.link.clone(), u.id);
+                // The next step is to bring in the posts table which we do
+                // use schema::posts line.
+                use schema::posts;
+
+                // Next we insert our NewPost object into our posts table, reusing
+                // the connection we setup earlier in our function.
+                diesel::insert_into(posts::table)
+                    .values(&new_post)
+                    .get_result::<Post>(&connection)
+                    .expect("Error saving post.");
+
+                return HttpResponse::Ok().body("Submitted.");
+            }
+            Err(e) => {
+                println!("{:?}", e);
+                return HttpResponse::Ok().body("Failed to find user.");
+            }
+        }
+    }
+    HttpResponse::Unauthorized().body("User not logged in.")
 }
 
 // Includes the use of actix_web and then starts the server with HttpServer::new().run()
