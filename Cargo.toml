@@ -16,10 +16,11 @@ actix-web = "3"
 actix-identity = "0.3.1"
 tera = "1"
 serde = "1.0"
-diesel = { version = "1.4.0", features = ["postgres", "chrono"] }
+diesel = { version = "1.4.4", features = ["postgres", "chrono", "r2d2"] }
 dotenv = "0.15.0"
 mysqlclient-sys = { version = ">=0.1.0, <0.3.0", optional = true }
 chrono = { version = "0.4", features = ["serde"] }
 argonautica = "0.2.0"
+r2d2 = "0.8"
 
 
