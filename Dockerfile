@@ -1,9 +1,9 @@
 # Cargo build stage
 
-FROM rust:latest as cargo-build
+FROM rust:latest AS cargo-build
 
-WORKDIR /usr/src/Oasis
-RUN apt-get update && apt-get upgrade -y && apt-get install -y build-essential
+WORKDIR /usr/src/oasis
+RUN apt-get install -y build-essential
 RUN apt-get install openssl libssl-dev -y && apt-get install clang llvm-dev libclang-dev -y
 COPY Cargo.toml Cargo.lock ./
 #COPY data ./data
@@ -23,6 +23,8 @@ RUN apt-get update && apt-get install -y && apt-get install postgresql -y && apt
 
 # Run the rest of the commands as the ``postgres`` user created by the ``postgres-9.3`` package when it was ``apt-get installed``
 USER postgres
+
+RUN mkdir -p /etc/postgresql/13/main
 
 # Create a PostgreSQL role named ``docker`` with ``docker`` as the password and
 # then create a database `docker` owned by the ``docker`` role.
@@ -52,6 +54,6 @@ CMD ["/usr/lib/postgresql/13/bin/postgres", "-D", "/var/lib/postgresql/13/main",
 
 FROM alpine:latest
 
-COPY --from=cargo-build /usr/local/cargo/bin/Oasis /usr/local/bin/Oasis
+COPY --from=cargo-build /usr/local/cargo/bin/oasis /usr/local/bin/oasis
 
-CMD ["/usr/local/cargo/bin/Oasis"]
+CMD ["oasis"]
