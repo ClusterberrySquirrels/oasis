@@ -13,4 +13,3 @@ COPY . .
 RUN cargo install --path .
 
 CMD ["Oasis"]
-
