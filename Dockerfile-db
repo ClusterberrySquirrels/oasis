@@ -1,0 +1,4 @@
+FROM postgres
+
+# Create the table on start-up
+ADD migrations/2021-03-28-231536_oasis/up.sql /docker-entrypoint-initdb.d/
